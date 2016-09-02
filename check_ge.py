@@ -74,7 +74,7 @@ def priceWithinSellingMargin(current_price, item_sell_price, margin):
 def determineItemsForSelling(items_current_prices, items_sell_prices):
     global ITEMS_TO_SELL
     for key, item in items_current_prices.iteritems():
-        if priceWithinSellingMargin(item["currentPrice"], items_sell_prices[key]["sellPrice"], items_sell_prices[key]["margin"]):
+        if priceWithinSellingMargin(item["currentPrice"], items_sell_prices[key]["sellPrice"], items_sell_prices[key]["sellMargin"]):
             ITEMS_TO_SELL.append({ "name": item["name"], "currentPrice": item["currentPrice"] })
 
 def priceWithinBuyMargin(current_price, item_buy_price, margin):
@@ -83,7 +83,7 @@ def priceWithinBuyMargin(current_price, item_buy_price, margin):
 def determineItemsForBuying(items_current_prices, items_buy_prices):
     global ITEMS_TO_BUY
     for key, item in items_current_prices.iteritems():
-        if priceWithinBuyMargin(item["currentPrice"], items_buy_prices[key]["buyPrice"], 150):
+        if priceWithinBuyMargin(item["currentPrice"], items_buy_prices[key]["buyPrice"], items_buy_prices[key]["buyMargin"]):
             ITEMS_TO_BUY.append({ "name": item["name"], "currentPrice": item["currentPrice"] })
 
 if __name__ == "__main__":

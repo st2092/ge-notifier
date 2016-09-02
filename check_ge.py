@@ -1,8 +1,12 @@
 import urllib2
 import json
 import pprint
+import Tkinter
+import datetime
+import os
 
 RS_GE_API_URL = "http://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item="
+LOG_FILE_DIR = "./price-logs/"
 ITEMS_INFO = {}
 ITEMS_FROM_USER = {}
 ITEMS_TO_SELL = []
@@ -86,12 +90,40 @@ def determineItemsForBuying(items_current_prices, items_buy_prices):
         if priceWithinBuyMargin(item["currentPrice"], items_buy_prices[key]["buyPrice"], items_buy_prices[key]["buyMargin"]):
             ITEMS_TO_BUY.append({ "name": item["name"], "currentPrice": item["currentPrice"] })
 
+def niceFormatItemPrice(items_list):
+    string_format = ""
+
+    if len(items_list) <= 0:
+        return "none"
+
+    for item in items_list:
+        string_format = string_format + item["name"] + ": " + str(item["currentPrice"]) + "\n"
+    return string_format
+
+def writePriceLogFile(items_to_buy, items_to_sell):
+    today = datetime.date.today()
+    filename = today.isoformat() + "-price-log.txt"
+
+    if not os.path.exists(LOG_FILE_DIR):
+        os.makedirs(LOG_FILE_DIR)
+
+    log_file = open(LOG_FILE_DIR + filename, "w")
+    log_file.write("<item name: current price>\n")
+    log_file.write("Items to buy:\n")
+    log_file.write(niceFormatItemPrice(items_to_buy))
+
+    log_file.write("\nItems to sell:\n")
+    log_file.write(niceFormatItemPrice(items_to_sell))
+
+
 if __name__ == "__main__":
-    parseUserItemsJsonFile("./items-sample.json")
+    parseUserItemsJsonFile("./items.json")
     gatherAllItemsInformation(ITEMS_FROM_USER)
     determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
     determineItemsForSelling(ITEMS_INFO, ITEMS_FROM_USER)
-    print "\nITEMS TO SELL\n"
-    pprint.pprint(ITEMS_TO_SELL)
-    print "\nITEMS TO BUY\n"
-    pprint.pprint(ITEMS_TO_BUY)
+
+    writePriceLogFile(ITEMS_TO_BUY, ITEMS_TO_SELL)
+
+    #top = Tkinter.Tk()
+    #open_log_file_button = Tkinter.Button(top, text ="Open Log", command = )
+    #top.mainloop()

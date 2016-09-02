@@ -87,7 +87,7 @@ def determineItemsForBuying(items_current_prices, items_buy_prices):
             ITEMS_TO_BUY.append({ "name": item["name"], "currentPrice": item["currentPrice"] })
 
 if __name__ == "__main__":
-    parseUserItemsJsonFile("./items.json")
+    parseUserItemsJsonFile("./items-sample.json")
     gatherAllItemsInformation(ITEMS_FROM_USER)
     determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
     determineItemsForSelling(ITEMS_INFO, ITEMS_FROM_USER)

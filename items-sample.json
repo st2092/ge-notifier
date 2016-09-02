@@ -1,0 +1,4 @@
+{ 
+    "item1":  { "name": "Green dragon leather", "id": 1745, "buyPrice": 2800, "sellPrice": 3600, "buyMargin": 200, "sellMargin": 200},
+    "item2":  { "name": "Rocktail", "id": 15272, "buyPrice": 2500, "sellPrice": 3500, "buyMargin": 200, "sellMargin": 500}
+}

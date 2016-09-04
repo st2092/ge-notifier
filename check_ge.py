@@ -4,6 +4,9 @@ import pprint
 import Tkinter
 import datetime
 import os
+import platform
+from subprocess import call, Popen
+from Tkinter import *
 
 RS_GE_API_URL = "http://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item="
 LOG_FILE_DIR = "./price-logs/"
@@ -11,6 +14,8 @@ ITEMS_INFO = {}
 ITEMS_FROM_USER = {}
 ITEMS_TO_SELL = []
 ITEMS_TO_BUY = []
+TODAY = None
+GUI_PROMPT = None
 
 def isUnicode(query_string):
     return isinstance(query_string, unicode);
@@ -101,7 +106,9 @@ def niceFormatItemPrice(items_list):
     return string_format
 
 def writePriceLogFile(items_to_buy, items_to_sell):
+    global TODAY
     today = datetime.date.today()
+    TODAY = today.isoformat()
     filename = today.isoformat() + "-price-log.txt"
 
     if not os.path.exists(LOG_FILE_DIR):
@@ -115,15 +122,41 @@ def writePriceLogFile(items_to_buy, items_to_sell):
     log_file.write("\nItems to sell:\n")
     log_file.write(niceFormatItemPrice(items_to_sell))
 
+def invokeNotepadToShowLog():
+    log_filename = TODAY + "-price-log.txt"
+    
+    log_file = open(LOG_FILE_DIR + log_filename, "r")
+    if os.path.exists(LOG_FILE_DIR + log_filename):
+        if platform.system() is "Windows":
+            notepad_pid = Popen(["notepad.exe", LOG_FILE_DIR + log_filename]).pid
+        elif platform.system() is "Linux":
+            #call (["gedit", LOG_FILE_DIR + log_filename, "&"])
+            gedit_pid = Popen(["gedit", LOG_FILE_DIR + log_filename]).pid
+        
+def promptGUIAboutItemsStatus():
+    global GUI_PROMPT
+
+    GUI_PROMPT = Tkinter.Tk()
+    GUI_PROMPT.title("RS GE Notifier")
+    GUI_PROMPT.geometry("250x150+300+300")
+    program_directory = sys.path[0]
+    GUI_PROMPT.wm_iconbitmap(os.path.join(program_directory, "coins.ico"))
+
+    message = StringVar()
+    message.set("Done processing item prices!\nYou have potentially " + str(len(ITEMS_TO_BUY)) + " items to buy and " + str(len(ITEMS_TO_SELL)) + " items to sell.\n\nUse the view log button for more details.") 
+    message_box = Message(GUI_PROMPT, textvariable = message, width = 200)
+    message_box.pack(fill = Y)
+
+    open_log_file_button = Tkinter.Button(GUI_PROMPT, text = "View price log", command = invokeNotepadToShowLog)
+    open_log_file_button.pack()
+    GUI_PROMPT.mainloop()
 
 if __name__ == "__main__":
-    parseUserItemsJsonFile("./items.json")
+    parseUserItemsJsonFile("./items-sample.json")
     gatherAllItemsInformation(ITEMS_FROM_USER)
     determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
     determineItemsForSelling(ITEMS_INFO, ITEMS_FROM_USER)
 
     writePriceLogFile(ITEMS_TO_BUY, ITEMS_TO_SELL)
 
-    #top = Tkinter.Tk()
-    #open_log_file_button = Tkinter.Button(top, text ="Open Log", command = )
-    #top.mainloop()
+    promptGUIAboutItemsStatus()

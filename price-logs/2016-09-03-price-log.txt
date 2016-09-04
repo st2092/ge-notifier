@@ -1,0 +1,7 @@
+<item name: current price>
+Items to buy:
+Rocktail: 2658
+Green dragon leather: 2727
+
+Items to sell:
+none

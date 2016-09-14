@@ -9,7 +9,7 @@ from subprocess import call, Popen
 from Tkinter import *
 
 RS_GE_API_URL = "http://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item="
-LOG_FILE_DIR = "./price-logs/"
+LOG_FILE_DIR = sys.path[0] + "/price-logs/"
 ITEMS_INFO = {}
 ITEMS_FROM_USER = {}
 ITEMS_TO_SELL = []
@@ -288,7 +288,8 @@ def promptGUIAboutItemsStatus():
     GUI_PROMPT.mainloop()
 
 if __name__ == "__main__":
-    parseUserItemsJsonFile("./items-sample.json")
+    #parseUserItemsJsonFile("./items.json")
+    parseUserItemsJsonFile(os.path.join(sys.path[0], "items.json"))
     gatherAllItemsInformation(ITEMS_FROM_USER)
     determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
     determineItemsForSelling(ITEMS_INFO, ITEMS_FROM_USER)

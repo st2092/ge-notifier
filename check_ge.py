@@ -7,16 +7,27 @@ import os
 import platform
 from subprocess import call, Popen
 from Tkinter import *
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 RS_GE_API_URL = "http://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item="
+RS_RUNEDATE_URL = "https://secure.runescape.com/m=itemdb_rs/api/info.json"
 LOG_FILE_DIR = sys.path[0] + "/price-logs/"
+DATABASE_FILE_DIR = sys.path[0] + "/database/"
 ITEMS_INFO = {}
 ITEMS_FROM_USER = {}
 ITEMS_TO_SELL = []
 ITEMS_TO_BUY = []
 TODAY = None
 GUI_PROMPT = None
-
+PRICE_DATABASE_FILENAME = "prices_db.json"
+MOD_DATE_DB_FILENAME = "mod_date.db"
+USER_ITEMS_FILENAME = "items.json"
+NATURE_RUNE_ID = 561
+GE_UPDATE_CHECK_ITEM = NATURE_RUNE_ID
+LAST_GE_UPDATE_FILENAME = "last_ge_update.db"
 
 def isUnicode(query_string):
     """
@@ -110,11 +121,14 @@ def obtainItemInformation(item_id, item_key_from_user):
     response_text = urllib2.urlopen(request_api_data).read()
     item_info_dictionary = json.loads(response_text)
     
-    item = {}
-    item["name"] = extractItemName(item_info_dictionary)
-    item["id"] = extractItemId(item_info_dictionary)
-    item["currentPrice"] = extractItemCurrentPrice(item_info_dictionary)
-    ITEMS_INFO[item_key_from_user] = item
+    if item_key_from_user is not None:
+        item = {}
+        item["name"] = extractItemName(item_info_dictionary)
+        item["id"] = extractItemId(item_info_dictionary)
+        item["currentPrice"] = extractItemCurrentPrice(item_info_dictionary)
+        ITEMS_INFO[item_key_from_user] = item
+    else:
+        return extractItemCurrentPrice(item_info_dictionary)
 
 def parseUserItemsJsonFile(path_to_user_item_list):
     """
@@ -244,6 +258,81 @@ def writePriceLogFile(items_to_buy, items_to_sell):
     log_file.write("\nItems to sell:\n")
     log_file.write(niceFormatItemPrice(items_to_sell))
 
+def getFileLastModifiedDate(full_path_to_file):
+    return os.path.getmtime(full_path_to_file)
+
+def backupPriceDatabase():
+    if not os.path.exists(DATABASE_FILE_DIR):
+        os.makedirs(DATABASE_FILE_DIR)
+
+    price_data_file = open(DATABASE_FILE_DIR + PRICE_DATABASE_FILENAME, "w")
+    json.dump(ITEMS_INFO, price_data_file)
+
+def loadPriceBackupDatabase():
+    if os.path.exists(DATABASE_FILE_DIR + PRICE_DATABASE_FILENAME):
+        price_data_file = open(DATABASE_FILE_DIR + PRICE_DATABASE_FILENAME, "r")
+        return json.load(price_data_file)
+    else:
+        return {}
+
+def backupModDateDatabase():
+    if not os.path.exists(DATABASE_FILE_DIR):
+        os.makedirs(DATABASE_FILE_DIR)
+    mod_date_db_file = open(DATABASE_FILE_DIR + MOD_DATE_DB_FILENAME, 'wb')
+    pickle.dump(getFileLastModifiedDate(os.path.join(sys.path[0], USER_ITEMS_FILENAME)), mod_date_db_file)
+
+def backupGEUpdateInformation():
+    if not os.path.exists(DATABASE_FILE_DIR):
+        os.makedirs(DATABASE_FILE_DIR)
+    ge_update_db_file = open(DATABASE_FILE_DIR + LAST_GE_UPDATE_FILENAME, "w")
+    pickle.dump(getFileLastModifiedDate(os.path.join(sys.path[0], USER_ITEMS_FILENAME)), ge_update_db_file)
+    pickle.dump(obtainItemInformation(GE_UPDATE_CHECK_ITEM, None), ge_update_db_file)
+
+def sameTimeStamp(time1, time2):
+    return time1 == time2
+
+def samePrice(price1, price2):
+    return price1 == price2
+
+def getRunedate():
+    request_api_data = urllib2.Request(RS_RUNEDATE_URL)
+    response_text = urllib2.urlopen(request_api_data).read()
+    print response_text
+
+def lastGEUpdate():
+    """
+    Obtains the last time the grand exchange price's updated. Ideally, we would like to know
+    the date and or time. But with the limitation of the RS API, we will be checking the
+    recorded price of an item that we know is always changing with each update.
+    
+    Returns -- last modified time of user json file and last recorded GE update
+    """
+    if not os.path.exists(DATABASE_FILE_DIR + LAST_GE_UPDATE_FILENAME):
+        return None, None
+    else:
+        ge_update_db_file = open(DATABASE_FILE_DIR + LAST_GE_UPDATE_FILENAME, "r")
+        user_item_file_last_modified_datetime = pickle.load(ge_update_db_file)
+        last_ge_update_price = pickle.load(ge_update_db_file)
+        return user_item_file_last_modified_datetime, last_ge_update_price
+
+
+def geHasUpdated():
+    """
+    Checks if the grand exchange prices' have updated compare to the last time
+    this script ran.
+
+    Note: Due to the limitation of the RS API, for checking price update we will
+    use a very commonly trade item. The price of that item is compare to the last
+    time.
+    """
+    item_file_last_modified_datetime, last_ge_update_check_price = lastGEUpdate()
+    current_ge_update_check_price = obtainItemInformation(GE_UPDATE_CHECK_ITEM, None)
+    if sameTimeStamp(getFileLastModifiedDate(os.path.join(sys.path[0], USER_ITEMS_FILENAME)), item_file_last_modified_datetime) and samePrice(last_ge_update_check_price, current_ge_update_check_price):
+        return False
+    else:
+        return True
+
+
 def invokeNotepadToShowLog():
     """
     Opens up a text editor to show the price log.
@@ -287,13 +376,37 @@ def promptGUIAboutItemsStatus():
     # starts the main window until the user quit it
     GUI_PROMPT.mainloop()
 
-if __name__ == "__main__":
-    #parseUserItemsJsonFile("./items.json")
-    parseUserItemsJsonFile(os.path.join(sys.path[0], "items.json"))
+def obtainUpToDatePricesFromRsApi():
     gatherAllItemsInformation(ITEMS_FROM_USER)
     determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
     determineItemsForSelling(ITEMS_INFO, ITEMS_FROM_USER)
 
+def backUpAllDatabases():
+    backupPriceDatabase()
+    backupModDateDatabase()
+    backupGEUpdateInformation()
+
+def main_geUpdated():
+    parseUserItemsJsonFile(os.path.join(sys.path[0], USER_ITEMS_FILENAME))
+    obtainUpToDatePricesFromRsApi()
+
     writePriceLogFile(ITEMS_TO_BUY, ITEMS_TO_SELL)
+
+    backUpAllDatabases()
+
+def main_noGeUpdate():
+    parseUserItemsJsonFile(os.path.join(sys.path[0], USER_ITEMS_FILENAME))
+    ITEMS_INFO = loadPriceBackupDatabase()
+    determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
+    determineItemsForSelling(ITEMS_INFO, ITEMS_FROM_USER)
+
+    writePriceLogFile(ITEMS_TO_BUY, ITEMS_TO_SELL)
+
+if __name__ == "__main__":
+    #parseUserItemsJsonFile("./items.json")
+    if geHasUpdated():
+        main_geUpdated()
+    else:
+        main_noGeUpdate()
 
     promptGUIAboutItemsStatus()

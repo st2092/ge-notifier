@@ -387,6 +387,7 @@ def backUpAllDatabases():
     backupGEUpdateInformation()
 
 def main_geUpdated():
+    print "There was a price update...\nUpdating prices please wait..."
     parseUserItemsJsonFile(os.path.join(sys.path[0], USER_ITEMS_FILENAME))
     obtainUpToDatePricesFromRsApi()
 
@@ -395,6 +396,7 @@ def main_geUpdated():
     backUpAllDatabases()
 
 def main_noGeUpdate():
+    print "There has not been an update today."
     parseUserItemsJsonFile(os.path.join(sys.path[0], USER_ITEMS_FILENAME))
     ITEMS_INFO = loadPriceBackupDatabase()
     determineItemsForBuying(ITEMS_INFO, ITEMS_FROM_USER)
@@ -403,7 +405,6 @@ def main_noGeUpdate():
     writePriceLogFile(ITEMS_TO_BUY, ITEMS_TO_SELL)
 
 if __name__ == "__main__":
-    #parseUserItemsJsonFile("./items.json")
     if geHasUpdated():
         main_geUpdated()
     else:

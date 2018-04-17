@@ -22,6 +22,11 @@ C:\Python27\python.exe <path-to-ge-notifier-dirctory>\check_ge.py
 
 When the script is done processing, you'll get a pop up letting you know how your items are doing.
 
+![Main Interface](/imgs/main-interface.PNG)
+
+![Log file](/imgs/log-file.PNG)
+
+
 ## __How To Add Items__
 
 The items.json file follows the following format

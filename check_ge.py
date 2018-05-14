@@ -56,7 +56,16 @@ def convertStringFromAPIToInt(item_price_str):
         item_price = int(item_price_str.replace('.','').replace(',','').replace('k',"00"))
     elif ',' in item_price_str:
         # e.g. "9,700"
-        item_price = int(item_price_str.replace(",",""))
+        item_price = int(item_price_str.replace(',',''))
+    elif '.' in item_price_str and 'm' in item_price_str:
+        # e.g. 12.8m
+        item_price = int(item_price_str.replace('.', '').replace(',', '').replace('m', "00000"))
+    elif '.' in item_price_str and 'b' in item_price_str:
+        # e.g. 2.1b
+        item_price = int(item_price_str.replace('.', '').replace(',', '').replace('b', "00000000"))
+    else:
+        # e.g. 100
+        item_price = int(item_price_str)
 
     return item_price
 

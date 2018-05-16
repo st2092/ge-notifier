@@ -8,6 +8,8 @@ Keep track of all your precious investments on Runescape 3 without checking pric
 
 Clone this repository and add in your items into the items json file. Then run the script.
 
+If this is your first time use, you need to create the items json file either manually or using the [Items File Creator](https://github.com/st2092/items-file-creator).
+
 On Linux,
 
 ```
@@ -20,6 +22,8 @@ On Windows,
 C:\Python27\python.exe <path-to-ge-notifier-dirctory>\check_ge.py
 ```
 
+Alternatively, you can run the cmd file to run the script on Windows.
+
 When the script is done processing, you'll get a pop up letting you know how your items are doing.
 
 ![Main Interface](/imgs/main-interface.PNG)
@@ -27,7 +31,7 @@ When the script is done processing, you'll get a pop up letting you know how you
 ![Log file](/imgs/log-file.PNG)
 
 
-## __How To Add Items__
+## __How To Add Items Manually__
 
 The items.json file follows the following format
 

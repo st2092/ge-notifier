@@ -6,7 +6,9 @@ Keep track of all your precious investments on Runescape 3 without checking pric
 
 ## __How To Use__
 
-Clone this repository and add in your items into the items json file. Then run the script.
+Download the latest release from the release tab.
+
+Alternatively, you can clone this repository and add in your items into the items json file. Then run the script.
 
 If this is your first time use, you need to create the items json file either manually or using the [Items File Creator](https://github.com/st2092/items-file-creator).
 

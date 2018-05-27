@@ -14,6 +14,11 @@ except:
 
 RS_GE_API_URL = "http://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item="
 RS_RUNEDATE_URL = "https://secure.runescape.com/m=itemdb_rs/api/info.json"
+OSRS_RUNEDATE_URL = "https://secure.runescape.com/m=itemdb_oldschool/api/info.json";
+OSRS_GE_API_URL = "http://services.runescape.com/m=itemdb_oldschool/api/catalogue/detail.json?item=";
+RS3 = 0
+OSRS = 1
+MODE_VERSION = RS3
 LOG_FILE_DIR = sys.path[0] + "/price-logs/"
 DATABASE_FILE_DIR = sys.path[0] + "/database/"
 ITEMS_INFO = {}
@@ -125,8 +130,13 @@ def obtainItemInformation(item_id, item_key_from_user):
 
     """
 
-    global item_number
-    request_api_data = urllib2.Request(RS_GE_API_URL + str(item_id))
+    global item_number, MODE_VERSION
+    if MODE_VERSION == RS3:
+        request_string = RS_GE_API_URL + str(item_id)
+    else:
+        request_string = OSRS_GE_API_URL + str(item_id)
+
+    request_api_data = urllib2.Request(request_string)
     response_text = urllib2.urlopen(request_api_data).read()
     item_info_dictionary = json.loads(response_text)
     
@@ -149,10 +159,19 @@ def parseUserItemsJsonFile(path_to_user_item_list):
                               and their associated buy/sell prices 
     """
     
-    global ITEMS_FROM_USER
+    global ITEMS_FROM_USER, MODE_VERSION
     user_items_json_file = open(path_to_user_item_list, 'r')
     user_items_list_json_text = user_items_json_file.read()
     user_items_dictionary = json.loads(user_items_list_json_text)
+
+    if "type" in user_items_dictionary:
+        itemFileType = user_items_dictionary["type"]["version"]
+        if (itemFileType == OSRS):
+            MODE_VERSION = OSRS
+            print "Set to OSRS mode"
+        else:
+            print "Set to RS3 mode"
+        del user_items_dictionary["type"]    
 
     ITEMS_FROM_USER = user_items_dictionary
 
@@ -369,7 +388,11 @@ def promptGUIAboutItemsStatus():
 
     # set up main graphics window
     GUI_PROMPT = Tkinter.Tk()
-    GUI_PROMPT.title("RS GE Notifier")
+    if MODE_VERSION == RS3:
+        GUI_PROMPT.title("RS3 GE Notifier")
+    else:
+        GUI_PROMPT.title("OSRS GE Notifier")
+
     GUI_PROMPT.geometry("250x150+300+300")
     program_directory = sys.path[0]
     GUI_PROMPT.wm_iconbitmap(os.path.join(program_directory, "coins.ico"))
